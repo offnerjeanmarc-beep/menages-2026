@@ -105,9 +105,9 @@ select:focus{outline:none;border-color:#38BDF8}
   </div>
 
   <div class="page active" id="page-resume">
-    <div class="sec-title">Gains annuels</div>
-    <div class="stat-grid" id="stat-grid"></div>
-    <div class="card"><div class="card-title">Répartition</div><div id="prog-list"></div></div>
+    <div class="sec-title">Gains par mois</div>
+    <div id="month-resume"></div>
+    <div class="card"><div class="card-title">Répartition annuelle</div><div id="prog-list"></div></div>
     <div class="card"><div class="card-title">Dernières saisies</div><div id="recent-list"></div></div>
   </div>
 
@@ -125,6 +125,7 @@ select:focus{outline:none;border-color:#38BDF8}
     <div class="field-lbl">Linge</div>
     <div class="linge-grid" id="linge-grid"></div>
     <button class="btn-submit" id="btn-submit" onclick="submitMenage()">✦ Enregistrer le ménage</button>
+    <button onclick="cancelSaisie()" style="width:100%;padding:13px;border-radius:14px;background:transparent;border:1.5px solid rgba(255,255,255,.1);color:#94A3B8;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px">✕ Annuler la saisie</button>
   </div>
 
   <div class="page" id="page-planning">
@@ -286,12 +287,22 @@ window.toggleLinge=function(key,val){
   }
 };
 
+window.cancelSaisie=function(){
+  selPerson=null; linge={taie:null,drap:null,couv:null};
+  document.querySelectorAll(".pbtn").forEach(b=>{b.style.borderColor="rgba(255,255,255,.08)";b.style.background="#1E293B";b.style.color="#94A3B8";});
+  ["taie","drap","couv"].forEach(k=>{["c","n"].forEach(s=>{const b=document.getElementById("tog-"+k+"-"+s);if(b){b.style.borderColor="rgba(255,255,255,.08)";b.style.background="#1E293B";b.style.color="#64748B";}});});
+  showToast("Saisie annulée","#94A3B8");
+};
+
 window.submitMenage=async function(){
   if(!selPerson){showToast("⚠ Choisissez un intervenant","#FBBF24");return;}
   const li=+document.getElementById("sel-log").value;
   const month=+document.getElementById("sel-month").value;
   const day=+document.getElementById("sel-day").value;
   const log=LOGEMENTS[li];
+  // Check duplicate: same logement + same day + same month
+  const duplicate=entries.find(e=>e.logementIdx===li&&e.month===month&&e.day===day);
+  if(duplicate){showToast("⚠ Ménage déjà saisi ce jour pour ce logement","#FB7185");return;}
   const btn=document.getElementById("btn-submit");
   btn.disabled=true; btn.textContent="Enregistrement...";
   try{
@@ -327,7 +338,28 @@ function renderResume(){
   const cnt={Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0};
   entries.forEach(e=>{tot[e.person]+=e.price;cnt[e.person]++;});
   const maxV=Math.max(...Object.values(tot),1);
-  document.getElementById("stat-grid").innerHTML=PEOPLE.map(p=>'<div class="stat-card"><div class="stat-bar" style="background:'+PC[p]+'"></div><div class="stat-name">'+PL[p]+'</div><div class="stat-val" style="color:'+PC[p]+'">'+tot[p]+' €</div><div class="stat-sub">'+cnt[p]+' ménage(s)</div></div>').join("");
+  // Monthly gains per person
+  const now=new Date();
+  const curM=now.getMonth();
+  const mD=Array.from({length:12},()=>({Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0}));
+  entries.forEach(e=>{if(e.month>=0&&e.month<12)mD[e.month][e.person]+=e.price;});
+  const maxM=Math.max(...mD.map(m=>Object.values(m).reduce((a,b)=>a+b,0)),1);
+  const mr=document.getElementById("month-resume");
+  mr.innerHTML='<div class="card"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px">'
+    +PEOPLE.map(p=>'<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#94A3B8;font-weight:500"><div style="width:9px;height:9px;border-radius:3px;background:'+PC[p]+'"></div>'+PL[p]+'</div>').join("")
+    +'</div>'
+    +MONTHS_S.map((m,i)=>{
+      const total=Object.values(mD[i]).reduce((a,b)=>a+b,0);
+      const isCur=i===curM;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        +'<span style="font-size:10px;color:'+(isCur?"#38BDF8":"#64748B")+';min-width:26px;font-weight:'+(isCur?700:400)+'">'+m+'</span>'
+        +'<div style="flex:1;background:#263347;border-radius:6px;overflow:hidden;display:flex;height:22px">'
+        +PEOPLE.map(p=>'<div style="height:22px;width:'+(mD[i][p]/maxM*100)+'%;background:'+PC[p]+';transition:width .6s"></div>').join("")
+        +'</div>'
+        +'<span style="font-size:10px;color:'+(isCur?"#38BDF8":"#64748B")+';min-width:34px;text-align:right;font-weight:'+(isCur?700:400)+'">'+(total>0?total+"€":"")+"</span>"
+        +'</div>';
+    }).join("")
+    +'</div>';
   document.getElementById("prog-list").innerHTML=PEOPLE.map(p=>'<div class="prog-item"><div class="prog-hdr"><span class="prog-name" style="color:'+PC[p]+'">'+PL[p]+'</span><span class="prog-val">'+tot[p]+' €</span></div><div class="prog-track"><div class="prog-fill" style="width:'+Math.round(tot[p]/maxV*100)+'%;background:'+PC[p]+'"></div></div></div>').join("");
   const recent=[...entries].slice(0,8);
   const rl=document.getElementById("recent-list");
