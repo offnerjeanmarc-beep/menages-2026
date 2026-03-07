@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0F172A">
+<title>Ménages 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0F172A;color:#F1F5F9;font-family:system-ui,-apple-system,'Helvetica Neue',sans-serif;overscroll-behavior:none}
+.app{max-width:430px;margin:0 auto;min-height:100dvh}
+.hdr{position:sticky;top:0;z-index:50;background:rgba(15,23,42,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07);padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between}
+.hdr-title{font-size:19px;font-weight:700;letter-spacing:-.5px}
+.hdr-accent{color:#38BDF8}
+.hdr-date{font-size:11px;color:#64748B}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;display:inline-block;margin-left:8px}
+.sync-dot.off{background:#FB7185}
+.sync-dot.loading{background:#FBBF24;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(15,23,42,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.07);display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom,6px)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 4px;background:none;border:none;color:#64748B;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.3px;transition:color .2s}
+.nav-btn.active{color:#38BDF8}
+.nav-icon{font-size:19px;line-height:1}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:#38BDF8;opacity:0;transition:opacity .2s;margin-top:1px}
+.nav-btn.active .nav-dot{opacity:1}
+.page{display:none;padding:16px 14px 90px}
+.page.active{display:block;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:#475569;margin-bottom:10px}
+.card{background:#1E293B;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#64748B;margin-bottom:12px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.stat-card{background:#1E293B;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:13px;position:relative;overflow:hidden}
+.stat-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+.stat-name{font-size:11px;color:#94A3B8;margin-bottom:5px;font-weight:500}
+.stat-val{font-size:24px;font-weight:700;letter-spacing:-1px}
+.stat-sub{font-size:10px;color:#64748B;margin-top:3px}
+.prog-item{margin-bottom:11px}
+.prog-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.prog-name{font-size:13px;font-weight:600}
+.prog-val{font-size:12px;font-weight:600}
+.prog-track{height:7px;background:#263347;border-radius:8px;overflow:hidden}
+.prog-fill{height:100%;border-radius:8px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.field-lbl{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#64748B;margin-bottom:8px;margin-top:4px}
+select{width:100%;background:#1E293B;border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#F1F5F9;font-size:14px;font-weight:500;padding:12px 14px;appearance:none;-webkit-appearance:none;cursor:pointer;margin-bottom:14px}
+select:focus{outline:none;border-color:#38BDF8}
+.date-row{display:flex;gap:8px;margin-bottom:14px}
+.date-row select{margin-bottom:0}
+.person-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.pbtn{padding:11px 10px;border-radius:10px;border:2px solid rgba(255,255,255,.08);background:#1E293B;color:#94A3B8;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;width:100%}
+.pdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.linge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.linge-item{display:flex;flex-direction:column;gap:5px}
+.linge-lbl{font-size:10px;color:#64748B;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:.5px}
+.tog-wrap{display:flex;gap:3px}
+.tog-btn{flex:1;padding:8px 2px;border-radius:7px;border:1.5px solid rgba(255,255,255,.08);background:#1E293B;color:#64748B;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center}
+.btn-submit{width:100%;padding:15px;border-radius:14px;background:linear-gradient(135deg,#38BDF8,#818CF8);border:none;color:#0F172A;font-size:15px;font-weight:700;cursor:pointer}
+.btn-submit:active{opacity:.88}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+.entry-row{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;background:#1E293B;border:1px solid rgba(255,255,255,.06);margin-bottom:5px}
+.entry-date{font-size:12px;color:#64748B;min-width:40px}
+.entry-person{font-size:12px;font-weight:700;flex:1}
+.entry-log{font-size:11px;color:#64748B;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry-gain{font-size:12px;font-weight:600;color:#38BDF8}
+.del-btn{background:none;border:none;color:#334155;font-size:14px;cursor:pointer;padding:2px 4px}
+.plan-month{font-size:12px;font-weight:700;color:#38BDF8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;margin-top:12px;display:flex;align-items:center;gap:8px}
+.plan-month::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+.price-tag{display:inline-block;background:rgba(56,189,248,.12);color:#38BDF8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px}
+.lbadge{font-size:9px;padding:2px 5px;border-radius:4px;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#94A3B8;font-weight:500}
+.legend-dot{width:9px;height:9px;border-radius:3px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.bar-month{font-size:10px;color:#64748B;min-width:26px}
+.bar-track{flex:1;background:#263347;border-radius:6px;overflow:hidden;display:flex}
+.bar-seg{transition:width .6s cubic-bezier(.4,0,.2,1)}
+.bar-total{font-size:10px;color:#64748B;min-width:34px;text-align:right}
+.empty{text-align:center;padding:36px 20px;color:#475569}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(16px);padding:10px 22px;border-radius:100px;font-weight:700;font-size:13px;opacity:0;transition:all .28s;white-space:nowrap;pointer-events:none;z-index:200;color:#0F172A}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading-screen{position:fixed;inset:0;background:#0F172A;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.loading-screen.hide{opacity:0;pointer-events:none;transition:opacity .4s}
+.loading-title{font-size:22px;font-weight:700}
+.loading-sub{font-size:13px;color:#64748B}
+.spinner{width:36px;height:36px;border:3px solid rgba(56,189,248,.2);border-top-color:#38BDF8;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div class="loading-screen" id="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-title">Ménages <span style="color:#38BDF8">2026</span></div>
+  <div class="loading-sub">Connexion en cours...</div>
+</div>
+
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-title">Ménages <span class="hdr-accent">2026</span><span class="sync-dot loading" id="sync-dot"></span></div>
+    <div class="hdr-date" id="hdr-date"></div>
+  </div>
+
+  <div class="page active" id="page-resume">
+    <div class="sec-title">Gains annuels</div>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="card"><div class="card-title">Répartition</div><div id="prog-list"></div></div>
+    <div class="card"><div class="card-title">Dernières saisies</div><div id="recent-list"></div></div>
+  </div>
+
+  <div class="page" id="page-saisie">
+    <div class="sec-title">Nouveau ménage</div>
+    <div class="field-lbl">Logement</div>
+    <select id="sel-log"></select>
+    <div class="field-lbl">Date</div>
+    <div class="date-row">
+      <select id="sel-month" style="flex:2"></select>
+      <select id="sel-day" style="flex:1"></select>
+    </div>
+    <div class="field-lbl">Intervenant</div>
+    <div class="person-grid" id="person-grid"></div>
+    <div class="field-lbl">Linge</div>
+    <div class="linge-grid" id="linge-grid"></div>
+    <button class="btn-submit" id="btn-submit" onclick="submitMenage()">✦ Enregistrer le ménage</button>
+  </div>
+
+  <div class="page" id="page-planning">
+    <div class="sec-title">Historique par logement</div>
+    <select id="plan-log" onchange="renderPlanning()"></select>
+    <div id="planning-content"></div>
+  </div>
+
+  <div class="page" id="page-graphs">
+    <div class="sec-title">Gains par mois</div>
+    <div class="card"><div class="legend" id="legend"></div><div id="month-bars"></div></div>
+    <div class="sec-title">Gains par logement</div>
+    <div class="card"><div id="log-bars"></div></div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('resume',this)"><span class="nav-icon">⊞</span>Résumé<div class="nav-dot"></div></button>
+    <button class="nav-btn" onclick="showPage('saisie',this)"><span class="nav-icon">＋</span>Saisie<div class="nav-dot"></div></button>
+    <button class="nav-btn" onclick="showPage('planning',this)"><span class="nav-icon">📅</span>Planning<div class="nav-dot"></div></button>
+    <button class="nav-btn" onclick="showPage('graphs',this)"><span class="nav-icon">📊</span>Graphiques<div class="nav-dot"></div></button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAzxHx4qx6eJJUgTsh0Uo77lmaMOVB3pGY",
+  authDomain: "menages-2026.firebaseapp.com",
+  projectId: "menages-2026",
+  storageBucket: "menages-2026.firebasestorage.app",
+  messagingSenderId: "427243362289",
+  appId: "1:427243362289:web:299f917319d43184b6d650"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const LOGEMENTS=[
+  {name:"Nid des Étoiles",price:40},{name:"Charming Appartment",price:25},
+  {name:"L'Abri du Bonheur",price:40},{name:"Douce Escale",price:25},
+  {name:"Escapade Romantique",price:20},{name:"50m2 Schiltigheim",price:30},
+  {name:"Nid Douillet",price:20},{name:"Krutenau",price:20},
+  {name:"70m2 Illkirch",price:40},{name:"120m2 Schiltigheim",price:60},
+  {name:"Sérénité Alsacienne",price:60},{name:"Atelier des Rêves",price:50},
+  {name:"Brooklyn",price:50},{name:"Carpe Diem",price:50},
+  {name:"Villa Piscine",price:80},{name:"Villa Exclusive",price:80}
+];
+const MONTHS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+const MONTHS_S=["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
+const DAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+const PEOPLE=["Emilie","Jean-Marc","Helene","Sandra"];
+const PL={Emilie:"Emilie","Jean-Marc":"Jean-Marc",Helene:"Hélène",Sandra:"Sandra"};
+const PC={Emilie:"#FB7185","Jean-Marc":"#38BDF8",Helene:"#4ADE80",Sandra:"#FBBF24"};
+const PB={Emilie:"rgba(251,113,133,.13)","Jean-Marc":"rgba(56,189,248,.13)",Helene:"rgba(74,222,128,.13)",Sandra:"rgba(251,191,36,.13)"};
+
+let entries=[];
+let selPerson=null;
+let linge={taie:null,drap:null,couv:null};
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  const now=new Date();
+  document.getElementById("hdr-date").textContent=now.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+
+  ["sel-log","plan-log"].forEach(id=>{
+    const s=document.getElementById(id);
+    LOGEMENTS.forEach((l,i)=>{const o=document.createElement("option");o.value=i;o.textContent=l.name+" — "+l.price+"€";s.appendChild(o);});
+  });
+  const sm=document.getElementById("sel-month");
+  MONTHS.forEach((m,i)=>{const o=document.createElement("option");o.value=i;o.textContent=m;if(i===now.getMonth())o.selected=true;sm.appendChild(o);});
+  sm.onchange=fillDays; fillDays();
+  setTimeout(()=>{document.getElementById("sel-day").value=now.getDate();},0);
+
+  const pg=document.getElementById("person-grid");
+  PEOPLE.forEach(p=>{
+    const b=document.createElement("button");b.className="pbtn";b.dataset.person=p;
+    b.innerHTML='<span class="pdot" style="background:'+PC[p]+'"></span>'+PL[p];
+    b.onclick=()=>selectPerson(p); pg.appendChild(b);
+  });
+
+  const lg=document.getElementById("linge-grid");
+  [["taie","Taie"],["drap","Drap"],["couv","Couverture"]].forEach(([key,label])=>{
+    const d=document.createElement("div");d.className="linge-item";
+    d.innerHTML='<div class="linge-lbl">'+label+'</div><div class="tog-wrap"><button class="tog-btn" id="tog-'+key+'-c" onclick="toggleLinge(\''+key+'\',\'Changer\')">✓</button><button class="tog-btn" id="tog-'+key+'-n" onclick="toggleLinge(\''+key+'\',\'Pas changer\')">✗</button></div>';
+    lg.appendChild(d);
+  });
+
+  // ── Firebase realtime listener ────────────────────────────────────────────
+  const q=query(collection(db,"menages"),orderBy("ts","desc"));
+  onSnapshot(q,(snap)=>{
+    entries=snap.docs.map(d=>({...d.data(),_id:d.id}));
+    setSyncDot("on");
+    hideLoading();
+    renderAll();
+  },(err)=>{
+    console.error(err);
+    setSyncDot("off");
+    hideLoading();
+  });
+});
+
+function hideLoading(){
+  const ls=document.getElementById("loading-screen");
+  ls.classList.add("hide");
+  setTimeout(()=>ls.style.display="none",400);
+}
+function setSyncDot(state){
+  const d=document.getElementById("sync-dot");
+  d.className="sync-dot"+(state==="on"?" ":" off ");
+  if(state==="loading")d.classList.add("loading");
+}
+
+window.fillDays=function(){
+  const m=+document.getElementById("sel-month").value;
+  const sd=document.getElementById("sel-day");
+  const prev=+sd.value||1;
+  sd.innerHTML="";
+  for(let d=1;d<=DAYS[m];d++){const o=document.createElement("option");o.value=d;o.textContent=String(d).padStart(2,"0");sd.appendChild(o);}
+  sd.value=Math.min(prev,DAYS[m]);
+};
+
+window.showPage=function(id,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");
+  btn.classList.add("active");
+  if(id==="resume")renderResume();
+  if(id==="planning")renderPlanning();
+  if(id==="graphs")renderGraphs();
+};
+
+window.selectPerson=function(p){
+  selPerson=selPerson===p?null:p;
+  document.querySelectorAll(".pbtn").forEach(b=>{
+    const pp=b.dataset.person;
+    if(selPerson===pp){b.style.borderColor=PC[pp];b.style.background=PB[pp];b.style.color=PC[pp];}
+    else{b.style.borderColor="rgba(255,255,255,.08)";b.style.background="#1E293B";b.style.color="#94A3B8";}
+  });
+};
+
+window.toggleLinge=function(key,val){
+  linge[key]=linge[key]===val?null:val;
+  const c=document.getElementById("tog-"+key+"-c");
+  const n=document.getElementById("tog-"+key+"-n");
+  if(!c||!n)return;
+  if(linge[key]==="Changer"){
+    c.style.borderColor="#4ADE80";c.style.background="rgba(74,222,128,.14)";c.style.color="#4ADE80";
+    n.style.borderColor="rgba(255,255,255,.08)";n.style.background="#1E293B";n.style.color="#64748B";
+  }else if(linge[key]==="Pas changer"){
+    n.style.borderColor="#FB7185";n.style.background="rgba(251,113,133,.12)";n.style.color="#FB7185";
+    c.style.borderColor="rgba(255,255,255,.08)";c.style.background="#1E293B";c.style.color="#64748B";
+  }else{
+    [c,n].forEach(b=>{b.style.borderColor="rgba(255,255,255,.08)";b.style.background="#1E293B";b.style.color="#64748B";});
+  }
+};
+
+window.submitMenage=async function(){
+  if(!selPerson){showToast("⚠ Choisissez un intervenant","#FBBF24");return;}
+  const li=+document.getElementById("sel-log").value;
+  const month=+document.getElementById("sel-month").value;
+  const day=+document.getElementById("sel-day").value;
+  const log=LOGEMENTS[li];
+  const btn=document.getElementById("btn-submit");
+  btn.disabled=true; btn.textContent="Enregistrement...";
+  try{
+    await addDoc(collection(db,"menages"),{
+      logement:log.name,logementIdx:li,price:log.price,
+      month,day,person:selPerson,
+      taie:linge.taie||"",drap:linge.drap||"",couv:linge.couv||"",
+      date:String(day).padStart(2,"0")+"/"+String(month+1).padStart(2,"0"),
+      ts:Date.now()
+    });
+    showToast("✓ Enregistré — "+log.price+" €");
+    selPerson=null; linge={taie:null,drap:null,couv:null};
+    document.querySelectorAll(".pbtn").forEach(b=>{b.style.borderColor="rgba(255,255,255,.08)";b.style.background="#1E293B";b.style.color="#94A3B8";});
+    ["taie","drap","couv"].forEach(k=>{["c","n"].forEach(s=>{const b=document.getElementById("tog-"+k+"-"+s);if(b){b.style.borderColor="rgba(255,255,255,.08)";b.style.background="#1E293B";b.style.color="#64748B";}});});
+  }catch(e){showToast("❌ Erreur: "+e.message,"#FB7185");}
+  btn.disabled=false; btn.textContent="✦ Enregistrer le ménage";
+};
+
+window.delEntry=async function(id){
+  try{await deleteDoc(doc(db,"menages",id));}
+  catch(e){showToast("❌ Erreur suppression","#FB7185");}
+};
+
+function showToast(msg,color){
+  const t=document.getElementById("toast");t.textContent=msg;t.style.background=color||"#4ADE80";
+  t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);
+}
+
+function renderAll(){renderResume();renderPlanning();renderGraphs();}
+
+function renderResume(){
+  const tot={Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0};
+  const cnt={Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0};
+  entries.forEach(e=>{tot[e.person]+=e.price;cnt[e.person]++;});
+  const maxV=Math.max(...Object.values(tot),1);
+  document.getElementById("stat-grid").innerHTML=PEOPLE.map(p=>'<div class="stat-card"><div class="stat-bar" style="background:'+PC[p]+'"></div><div class="stat-name">'+PL[p]+'</div><div class="stat-val" style="color:'+PC[p]+'">'+tot[p]+' €</div><div class="stat-sub">'+cnt[p]+' ménage(s)</div></div>').join("");
+  document.getElementById("prog-list").innerHTML=PEOPLE.map(p=>'<div class="prog-item"><div class="prog-hdr"><span class="prog-name" style="color:'+PC[p]+'">'+PL[p]+'</span><span class="prog-val">'+tot[p]+' €</span></div><div class="prog-track"><div class="prog-fill" style="width:'+Math.round(tot[p]/maxV*100)+'%;background:'+PC[p]+'"></div></div></div>').join("");
+  const recent=[...entries].slice(0,8);
+  const rl=document.getElementById("recent-list");
+  if(!recent.length){rl.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div>Aucune saisie pour l\'instant</div></div>';return;}
+  rl.innerHTML=recent.map(e=>'<div class="entry-row"><span class="entry-date">'+e.date+'</span><span class="entry-person" style="color:'+PC[e.person]+'">'+PL[e.person]+'</span><span class="entry-log">'+(e.logement.length>14?e.logement.slice(0,14)+"…":e.logement)+'</span><span class="entry-gain">'+e.price+' €</span><button class="del-btn" onclick="delEntry(\''+e._id+'\')">✕</button></div>').join("");
+}
+
+window.renderPlanning=function(){
+  const li=+document.getElementById("plan-log").value;
+  const logE=entries.filter(e=>e.logementIdx===li);
+  const el=document.getElementById("planning-content");
+  if(!logE.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏠</div><div>Aucun ménage pour ce logement</div></div>';return;}
+  const byM={};logE.forEach(e=>{if(!byM[e.month])byM[e.month]=[];byM[e.month].push(e);});
+  el.innerHTML=Object.keys(byM).sort((a,b)=>+a-+b).map(m=>{
+    const mes=byM[m].sort((a,b)=>a.day-b.day);
+    const total=mes.reduce((s,e)=>s+e.price,0);
+    const b=(e,k,l)=>e[k]?'<span class="lbadge" style="background:'+(e[k]==="Pas changer"?"rgba(148,163,184,.1)":"rgba(74,222,128,.15)")+';color:'+(e[k]==="Pas changer"?"#64748B":"#4ADE80")+'">'+l+'</span>':"";
+    return '<div class="plan-month">'+MONTHS[m]+'<span class="price-tag">'+total+' €</span></div>'+
+      mes.map(e=>'<div class="entry-row"><span class="entry-date">'+e.date+'</span><span class="entry-person" style="color:'+PC[e.person]+';flex:1">'+PL[e.person]+'</span><div style="display:flex;gap:3px">'+b(e,"taie","T")+b(e,"drap","D")+b(e,"couv","C")+'</div><span class="entry-gain">'+e.price+' €</span><button class="del-btn" onclick="delEntry(\''+e._id+'\');renderPlanning()">✕</button></div>').join("");
+  }).join("");
+};
+
+function renderGraphs(){
+  const mD=Array.from({length:12},()=>({Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0}));
+  entries.forEach(e=>{if(e.month>=0&&e.month<12)mD[e.month][e.person]+=e.price;});
+  const maxM=Math.max(...mD.map(m=>Object.values(m).reduce((a,b)=>a+b,0)),1);
+  document.getElementById("legend").innerHTML=PEOPLE.map(p=>'<div class="legend-item"><div class="legend-dot" style="background:'+PC[p]+'"></div>'+PL[p]+'</div>').join("");
+  document.getElementById("month-bars").innerHTML=MONTHS_S.map((m,i)=>{
+    const total=Object.values(mD[i]).reduce((a,b)=>a+b,0);
+    return '<div class="bar-row"><span class="bar-month">'+m+'</span><div class="bar-track" style="height:22px">'+PEOPLE.map(p=>'<div class="bar-seg" style="width:'+(mD[i][p]/maxM*100)+'%;height:22px;background:'+PC[p]+'"></div>').join("")+'</div><span class="bar-total">'+(total>0?total+"€":"")+'</span></div>';
+  }).join("");
+  const lT={};LOGEMENTS.forEach(l=>{lT[l.name]=0;});entries.forEach(e=>{lT[e.logement]+=e.price;});
+  const active=LOGEMENTS.filter(l=>lT[l.name]>0).sort((a,b)=>lT[b.name]-lT[a.name]);
+  const maxL=Math.max(...active.map(l=>lT[l.name]),1);
+  const lb=document.getElementById("log-bars");
+  if(!active.length){lb.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div>Aucune donnée</div></div>';return;}
+  lb.innerHTML=active.map(l=>'<div class="bar-row"><span style="font-size:10px;color:#64748B;min-width:88px;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(l.name.length>16?l.name.slice(0,16)+"…":l.name)+'</span><div class="bar-track" style="height:20px"><div class="bar-seg" style="width:'+(lT[l.name]/maxL*100)+'%;height:20px;background:#38BDF8"></div></div><span class="bar-total">'+lT[l.name]+'€</span></div>').join("");
+}
+
+</script>
+</body>
+</html>
