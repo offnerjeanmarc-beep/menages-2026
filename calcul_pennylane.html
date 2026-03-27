@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calcul Commission Pennylane - Conciergerie Liberty</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .container { width: 100%; max-width: 460px; }
+    .header { text-align: center; margin-bottom: 24px; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; background: white; border-radius: 999px; padding: 6px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 12px; font-size: 12px; font-weight: 700; color: #2563eb; letter-spacing: 0.05em; text-transform: uppercase; }
+    .header h1 { font-size: 24px; font-weight: 800; color: #1e293b; }
+    .header p { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 20px; margin-bottom: 16px; }
+    .card-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+    .input-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .input-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .input-label { font-size: 14px; font-weight: 500; color: #475569; flex: 1; }
+    .input-wrap { display: flex; align-items: center; gap: 4px; }
+    .input-wrap input { width: 110px; text-align: right; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 10px; font-size: 14px; font-weight: 600; color: #1e40af; background: #eff6ff; outline: none; }
+    .input-suffix { font-size: 13px; color: #94a3b8; width: 16px; }
+    .result-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .result-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .result-row.highlight { background: #f0fdf4; border-radius: 10px; padding: 12px; margin-top: 8px; border-bottom: none; }
+    .result-label { font-size: 14px; font-weight: 500; color: #64748b; flex: 1; }
+    .result-label .sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .result-row.highlight .result-label { color: #166534; }
+    .result-value { font-size: 15px; font-weight: 700; color: #1e293b; }
+    .result-row.highlight .result-value { font-size: 18px; color: #15803d; }
+    .summary { background: #4f46e5; border-radius: 16px; padding: 18px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
+    .summary-left .lbl { font-size: 11px; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+    .summary-left .ht { font-size: 20px; font-weight: 800; margin: 2px 0; }
+    .summary-left .tva { font-size: 13px; color: #c7d2fe; }
+    .summary-right { text-align: right; }
+    .summary-right .lbl { font-size: 11px; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+    .summary-right .ttc { font-size: 26px; font-weight: 800; }
+    .footer { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badge">Conciergerie Liberty</div>
+    <h1>Calcul Commission</h1>
+    <p>&amp; Facturation Pennylane</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Donnees entree</div>
+    <div class="input-row"><span class="input-label">Virement (encaissement brut)</span><div class="input-wrap"><input type="number" id="virement" value="200" step="0.01" oninput="calculate()"><span class="input-suffix">EUR</span></div></div>
+    <div class="input-row"><span class="input-label">Frais de menage</span><div class="input-wrap"><input type="number" id="fraisMenage" value="82" step="0.01" oninput="calculate()"><span class="input-suffix">EUR</span></div></div>
+    <div class="input-row"><span class="input-label">Taux de commission</span><div class="input-wrap"><input type="number" id="tauxCommission" value="20" step="0.1" oninput="calculate()"><span class="input-suffix">%</span></div></div>
+    <div class="input-row"><span class="input-label">Taux de TVA</span><div class="input-wrap"><input type="number" id="tauxTVA" value="20" step="0.1" oninput="calculate()"><span class="input-suffix">%</span></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Resultats calcules</div>
+    <div class="result-row"><div class="result-label">Sans menage<div class="sub">= Virement - Frais de menage</div></div><span class="result-value" id="res-sansMenage">-</span></div>
+    <div class="result-row"><div class="result-label">Commission TTC<div class="sub" id="lbl-commissionTTC">= Sans menage x 20%</div></div><span class="result-value" id="res-commissionTTC">-</span></div>
+    <div class="result-row"><div class="result-label">Montant TVA<div class="sub" id="lbl-tva">TVA a 20%</div></div><span class="result-value" id="res-tva">-</span></div>
+    <div class="result-row highlight"><div class="result-label">Total a facturer HT<div class="sub">= Commission TTC / (1 + TVA%)</div></div><span class="result-value" id="res-ht">-</span></div>
+  </div>
+  <div class="summary">
+    <div class="summary-left"><div class="lbl">Facture Pennylane</div><div class="ht" id="sum-ht">-</div><div class="tva" id="sum-tva">TVA (20%) : -</div></div>
+    <div class="summary-right"><div class="lbl">TTC</div><div class="ttc" id="sum-ttc">-</div></div>
+  </div>
+  <p class="footer">Modifiez les valeurs pour recalculer automatiquement</p>
+</div>
+<script>
+function fmt(val){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits:2}).format(val);}
+function calculate(){
+  var v=parseFloat(document.getElementById('virement').value)||0;
+  var m=parseFloat(document.getElementById('fraisMenage').value)||0;
+  var tc=parseFloat(document.getElementById('tauxCommission').value)||0;
+  var tv=parseFloat(document.getElementById('tauxTVA').value)||0;
+  var sm=v-m; var cttc=sm*(tc/100); var cht=cttc/(1+tv/100); var mtva=cttc-cht;
+  document.getElementById('res-sansMenage').textContent=fmt(sm);
+  document.getElementById('res-commissionTTC').textContent=fmt(cttc);
+  document.getElementById('lbl-commissionTTC').textContent='= Sans menage x '+tc+'%';
+  document.getElementById('res-tva').textContent=fmt(mtva);
+  document.getElementById('lbl-tva').textContent='TVA a '+tv+'%';
+  document.getElementById('res-ht').textContent=fmt(cht);
+  document.getElementById('sum-ht').textContent='HT : '+fmt(cht);
+  document.getElementById('sum-tva').textContent='TVA ('+tv+'%) : '+fmt(mtva);
+  document.getElementById('sum-ttc').textContent=fmt(cttc);
+}
+calculate();
+</script>
+</body>
+</html>
