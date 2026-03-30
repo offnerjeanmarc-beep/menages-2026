@@ -440,16 +440,16 @@ function showToast(msg,color){
 }
 
 function renderResume(){
-  const tot={Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0};
-  const cnt={Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0};
-  entries.forEach(e=>{tot[e.person]+=e.price;cnt[e.person]++;});
+  const tot=Object.fromEntries(PEOPLE.map(p=>[p,0]));
+  const cnt=Object.fromEntries(PEOPLE.map(p=>[p,0]));
+  entries.forEach(e=>{if(tot[e.person]!==undefined){tot[e.person]+=e.price;cnt[e.person]++;}});
   const totalAnnuel=Object.values(tot).reduce((a,b)=>a+b,0);
   const totalMenages=entries.length;
   const maxV=Math.max(...Object.values(tot),1);
   const now=new Date();
   const curM=now.getMonth();
-  const mD=Array.from({length:12},()=>({Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0}));
-  entries.forEach(e=>{if(e.month>=0&&e.month<12)mD[e.month][e.person]+=e.price;});
+  const mD=Array.from({length:12},()=>Object.fromEntries(PEOPLE.map(p=>[p,0])));
+  entries.forEach(e=>{if(e.month>=0&&e.month<12&&mD[e.month][e.person]!==undefined)mD[e.month][e.person]+=e.price;});
   const maxM=Math.max(...mD.map(m=>Object.values(m).reduce((a,b)=>a+b,0)),1);
 
   // Bandeau total annuel
@@ -522,8 +522,8 @@ window.renderPlanning=function(){
 };
 
 function renderGraphs(){
-  const mD=Array.from({length:12},()=>({Emilie:0,"Jean-Marc":0,Helene:0,Sandra:0}));
-  entries.forEach(e=>{if(e.month>=0&&e.month<12)mD[e.month][e.person]+=e.price;});
+  const mD=Array.from({length:12},()=>Object.fromEntries(PEOPLE.map(p=>[p,0])));
+  entries.forEach(e=>{if(e.month>=0&&e.month<12&&mD[e.month][e.person]!==undefined)mD[e.month][e.person]+=e.price;});
   const maxM=Math.max(...mD.map(m=>Object.values(m).reduce((a,b)=>a+b,0)),1);
   document.getElementById("legend").innerHTML=PEOPLE.map(p=>'<div class="legend-item"><div class="legend-dot" style="background:'+PC[p]+'"></div>'+PL[p]+'</div>').join("");
   document.getElementById("month-bars").innerHTML=MONTHS_S.map((m,i)=>{
