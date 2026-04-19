@@ -571,9 +571,8 @@ function renderGains(){
   const totals={};
   PEOPLE.forEach(p=>{totals[p]=new Array(MONTHS.length).fill(0);});
   entries.forEach(e=>{
-    if(totals[e.person]!==undefined){
-      const mi=MONTHS.indexOf(e.month);
-      if(mi>=0)totals[e.person][mi]+=getPrice(e);
+  if(totals[e.person]!==undefined&&e.month>=0&&e.month<12){
+      totals[e.person][e.month]+=getPrice(e);
     }
   });
   const active=PEOPLE.filter(p=>totals[p].some(v=>v>0));
