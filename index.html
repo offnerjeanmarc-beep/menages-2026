@@ -103,6 +103,18 @@ select:focus{outline:none;border-color:#38BDF8}
 .total-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#64748B}
 .total-value{font-size:26px;font-weight:800;letter-spacing:-1px;color:#38BDF8}
 .total-count{font-size:11px;color:#64748B;margin-top:2px}
+
+.gains-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
+.gains-table{border-collapse:collapse;width:100%;font-size:13px;min-width:680px}
+.gains-table th,.gains-table td{padding:6px 8px;border:1px solid rgba(148,163,184,.25);text-align:right;white-space:nowrap}
+.gains-table th{background:rgba(30,41,59,.55);color:#e2e8f0;font-weight:600;text-align:center}
+.gains-table td.person-cell{text-align:left;font-weight:600;color:#e2e8f0;position:sticky;left:0;background:rgba(15,23,42,.92);z-index:2}
+.gains-table tbody tr:nth-child(odd) td{background:rgba(30,41,59,.15)}
+.gains-table tbody tr:nth-child(odd) td.person-cell{background:rgba(15,23,42,.96)}
+.gains-table td.row-total{font-weight:700;color:#34d399;background:rgba(52,211,153,.10)!important}
+.gains-table tr.totals-row td{font-weight:700;background:rgba(30,41,59,.75)!important;color:#e2e8f0;border-top:2px solid rgba(148,163,184,.45)}
+.gains-table tr.totals-row td.grand-total{color:#34d399;background:rgba(52,211,153,.18)!important}
+.gains-empty{padding:24px;text-align:center;color:#94a3b8}
 </style>
 </head>
 <body>
@@ -169,11 +181,17 @@ select:focus{outline:none;border-color:#38BDF8}
     <div class="card"><div id="log-bars"></div></div>
   </div>
 
+  <div class="page" id="page-gains">
+    <div class="sec-title">Gains par mois et par personne</div>
+    <div class="card"><div id="gains-table-container"></div></div>
+  </div>
+
   <nav class="nav" aria-label="Navigation principale">
     <button class="nav-btn active" onclick="showPage('resume',this)" aria-label="Résumé"><span class="nav-icon">⊞</span>Résumé<div class="nav-dot"></div></button>
     <button class="nav-btn" onclick="showPage('saisie',this)" aria-label="Saisie"><span class="nav-icon">＋</span>Saisie<div class="nav-dot"></div></button>
     <button class="nav-btn" onclick="showPage('planning',this)" aria-label="Planning"><span class="nav-icon">📅</span>Planning<div class="nav-dot"></div></button>
     <button class="nav-btn" onclick="showPage('graphs',this)" aria-label="Graphiques"><span class="nav-icon">📊</span>Graphiques<div class="nav-dot"></div></button>
+    <button class="nav-btn" onclick="showPage('gains',this)" aria-label="Gains par personne"><span class="nav-icon">💰</span>Gains<div class="nav-dot"></div></button>
   </nav>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -341,6 +359,7 @@ function renderCurrentPage(){
   if(currentPage==="resume") renderResume();
   else if(currentPage==="planning") renderPlanning();
   else if(currentPage==="graphs") renderGraphs();
+  else if(currentPage==="gains") renderGains();
 }
 
 window.selectPerson=function(p){
@@ -546,6 +565,39 @@ function renderGraphs(){
     +'</div>'
   ).join("");
 }
+function renderGains(){
+  const container=document.getElementById("gains-table-container");
+  if(!container)return;
+  const totals={};
+  PEOPLE.forEach(p=>{totals[p]=new Array(MONTHS.length).fill(0);});
+  entries.forEach(e=>{
+    if(totals[e.person]!==undefined){
+      const mi=MONTHS.indexOf(e.month);
+      if(mi>=0)totals[e.person][mi]+=getPrice(e);
+    }
+  });
+  const active=PEOPLE.filter(p=>totals[p].some(v=>v>0));
+  if(active.length===0){container.innerHTML='<div class="gains-empty">Aucun gain enregistr\u00e9</div>';return;}
+  let html='<div class="gains-table-wrap"><table class="gains-table">';
+  html+='<thead><tr><th>Personne</th>';
+  MONTHS.forEach(m=>{html+='<th>'+m.slice(0,3)+'</th>';});
+  html+='<th>Total</th></tr></thead><tbody>';
+  const colT=new Array(MONTHS.length).fill(0);
+  let grand=0;
+  active.forEach(p=>{
+    let rowT=0;
+    html+='<tr><td class="person-cell">'+p+'</td>';
+    totals[p].forEach((v,i)=>{html+='<td>'+(v>0?v+'€':'-')+'</td>';rowT+=v;colT[i]+=v;});
+    html+='<td class="row-total">'+rowT+'€</td></tr>';
+    grand+=rowT;
+  });
+  html+='<tr class="totals-row"><td>Total</td>';
+  colT.forEach(v=>{html+='<td>'+(v>0?v+'€':'-')+'</td>';});
+  html+='<td class="grand-total">'+grand+'€</td></tr>';
+  html+='</tbody></table></div>';
+  container.innerHTML=html;
+}
+
 
 </script>
 </body>
