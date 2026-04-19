@@ -220,6 +220,7 @@ let entries=[];
 let selPerson=null;
 let linge={taie:null,drap:null,couv:null};
 let currentPage="resume";
+  function getPrice(e){return(LOGEMENTS[e.logementIdx]?.price??e.price);}
 
 // ── UTILITAIRES ───────────────────────────────────────────────────────────────
 
@@ -442,14 +443,14 @@ function showToast(msg,color){
 function renderResume(){
   const tot=Object.fromEntries(PEOPLE.map(p=>[p,0]));
   const cnt=Object.fromEntries(PEOPLE.map(p=>[p,0]));
-  entries.forEach(e=>{if(tot[e.person]!==undefined){tot[e.person]+=e.price;cnt[e.person]++;}});
+  entries.forEach(e=>{if(tot[e.person]!==undefined){tot[e.person]+=getPrice(e);cnt[e.person]++;}});
   const totalAnnuel=Object.values(tot).reduce((a,b)=>a+b,0);
   const totalMenages=entries.length;
   const maxV=Math.max(...Object.values(tot),1);
   const now=new Date();
   const curM=now.getMonth();
   const mD=Array.from({length:12},()=>Object.fromEntries(PEOPLE.map(p=>[p,0])));
-  entries.forEach(e=>{if(e.month>=0&&e.month<12&&mD[e.month][e.person]!==undefined)mD[e.month][e.person]+=e.price;});
+  entries.forEach(e=>{if(e.month>=0&&e.month<12&&mD[e.month][e.person]!==undefined)mD[e.month][e.person]+=getPrice(e);});
   const maxM=Math.max(...mD.map(m=>Object.values(m).reduce((a,b)=>a+b,0)),1);
 
   // Bandeau total annuel
@@ -491,7 +492,7 @@ function renderResume(){
     +'<span class="entry-date">'+e.date+'</span>'
     +'<span class="entry-person" style="color:'+PC[e.person]+'">'+PL[e.person]+'</span>'
     +'<span class="entry-log">'+(e.logement.length>14?e.logement.slice(0,14)+"…":e.logement)+'</span>'
-    +'<span class="entry-gain">'+e.price+' €</span>'
+    +'<span class="entry-gain">'+getPrice(e)+' €</span>'
     +'<button class="del-btn" aria-label="Supprimer" onclick="delEntry(\''+e._id+'\',\''+e.logement.replace(/'/g,"\\'")+'\')" title="Supprimer">✕</button>'
     +'</div>'
   ).join("");
@@ -506,7 +507,7 @@ window.renderPlanning=function(){
   logE.forEach(e=>{if(!byM[e.month])byM[e.month]=[];byM[e.month].push(e);});
   el.innerHTML=Object.keys(byM).sort((a,b)=>+a-+b).map(m=>{
     const mes=byM[m].sort((a,b)=>a.day-b.day);
-    const total=mes.reduce((s,e)=>s+e.price,0);
+    const total=mes.reduce((s,e)=>s+getPrice(e),0);
     const b=(e,k,l)=>e[k]?'<span class="lbadge" style="background:'+(e[k]==="Pas changer"?"rgba(148,163,184,.1)":"rgba(74,222,128,.15)")+';color:'+(e[k]==="Pas changer"?"#64748B":"#4ADE80")+'">'+l+'</span>':"";
     return '<div class="plan-month">'+MONTHS[m]+'<span class="price-tag">'+total+' €</span></div>'
       +mes.map(e=>
@@ -514,7 +515,7 @@ window.renderPlanning=function(){
         +'<span class="entry-date">'+e.date+'</span>'
         +'<span class="entry-person" style="color:'+PC[e.person]+';flex:1">'+PL[e.person]+'</span>'
         +'<div style="display:flex;gap:3px">'+b(e,"taie","T")+b(e,"drap","D")+b(e,"couv","C")+'</div>'
-        +'<span class="entry-gain">'+e.price+' €</span>'
+        +'<span class="entry-gain">'+getPrice(e)+' €</span>'
         +'<button class="del-btn" aria-label="Supprimer" onclick="delEntry(\''+e._id+'\',\''+e.logement.replace(/'/g,"\\'")+'\',true)" title="Supprimer">✕</button>'
         +'</div>'
       ).join("");
@@ -532,7 +533,7 @@ function renderGraphs(){
   }).join("");
   const lT={};
   LOGEMENTS.forEach(l=>{lT[l.name]=0;});
-  entries.forEach(e=>{lT[e.logement]+=e.price;});
+  entries.forEach(e=>{lT[e.logement]+=getPrice(e);});
   const active=LOGEMENTS.filter(l=>lT[l.name]>0).sort((a,b)=>lT[b.name]-lT[a.name]);
   const maxL=Math.max(...active.map(l=>lT[l.name]),1);
   const lb=document.getElementById("log-bars");
